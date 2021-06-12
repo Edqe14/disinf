@@ -13,14 +13,17 @@
       "esnext.array",
       "esnext.asynciterable",
       "esnext.intl",
-      "esnext.symbol"
+      "esnext.symbol",
+      "DOM",
+      "DOM.Iterable"
     ],
     "noImplicitAny": true,
     "sourceMap": false,
     "skipDefaultLibCheck": true,
-    "baseUrl": "./src/",
+    "rootDir": "./src",
+    "baseUrl": "./src",
     "paths": {
-      "@/*": ["*"]
+      "@/*": ["./*"]
     }
   },
   "exclude": [
