@@ -101,6 +101,11 @@ export default class List extends EventEmitter {
     });
 
     console.log(list);
+    console.log(
+      `${chalk.dim.bold('Press')} ${this.colorizeInfo(
+        'CTRL + H'
+      )} ${chalk.bold.dim('to show help')}`
+    );
   }
 
   buildInfo(names: TableColumn[]): TableColumn[] {
