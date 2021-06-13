@@ -1,29 +1,51 @@
 import ora from 'ora';
 import chalk from 'chalk';
+import { Client } from 'discord.js';
+import readline from 'readline';
 
-import Server from '@/modules/server';
 import List from '@/modules/list';
+import getToken from '@/utils/getToken';
+import process from 'process';
 
-const spinner = ora('Loading...');
+const bot = new Client();
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
 
-const oauth = new Server();
-oauth.once('listen', () => {
-  spinner.stop();
-  console.clear();
-  console.log(
-    chalk.yellow('Please login first to continue:\n'),
-    chalk.redBright.underline(oauth.link)
-  );
+(async () => {
+  let status = false;
 
-  oauth.once('login', async (access) => {
+  while (!status) {
+    const token = await getToken(rl);
     console.clear();
-    spinner.start('Fetching...');
 
-    const guilds = await oauth.client.getGuilds(access);
+    const spinner = ora('Logging in...').start();
 
+    status = await bot
+      .login(<string>token)
+      .then(() => Boolean(spinner.stop()))
+      .catch((e) => {
+        spinner.stop();
+        console.error(chalk.red.bold(e.message));
+        return false;
+      });
+  }
+
+  const spinner = ora('Loading...').start();
+  bot.once('ready', () => {
+    rl.close();
     spinner.stop();
     console.clear();
 
-    new List(guilds);
+    if (process.env.NODE_ENV !== 'production')
+      console.log(
+        chalk.white.dim(
+          // @ts-expect-error Check for remaining session restarts
+          `[DEV] Restarts left: ${bot.ws.sessionStartLimit.remaining}\n`
+        )
+      );
+
+    new List(bot);
   });
-});
+})();
