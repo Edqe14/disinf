@@ -3,74 +3,60 @@ import { Client, Guild, Invite } from 'discord.js';
 import chalk from 'chalk';
 import columnify from 'columnify';
 import readline from 'readline';
+import fs from 'fs/promises';
+import path from 'path';
 
 import clamp from '@/utils/clamp';
-
-interface TableColumn {
-  name?: string;
-  info?: string;
-}
+import { TableColumn } from '@/types/list';
+import { Key, Keybind } from '@/types/keybind';
 
 export default class List extends EventEmitter {
   public client: Client;
   public index = 0;
+  public keybinds: Record<string, Keybind> = {};
 
-  private leaving = false;
-  private showingHelp = false;
+  public leaving = false;
+  public showingHelp = false;
 
   constructor(client: Client) {
     super();
 
     this.client = client;
 
-    this.listenKeypress();
-    this.render();
+    (async () => {
+      await this.loadKeybinds();
+      this.listenKeypress();
+      this.render();
+    })();
+  }
+
+  async loadKeybinds(): Promise<void> {
+    const keybindsPath = path.resolve(__dirname, 'keybinds');
+    if (!keybindsPath) throw new Error('Missing keybinds path');
+
+    (await fs.readdir(keybindsPath))
+      .filter((f) => f.split('.').pop() === 'js' || f.split('.').pop() === 'ts')
+      .forEach(async (f) => {
+        const keybind: Keybind = await import(path.resolve(keybindsPath, f));
+        if (keybind) this.keybinds[keybind.name] = keybind;
+      });
   }
 
   listenKeypress(): void {
     readline.emitKeypressEvents(process.stdin);
     if (process.stdin.isTTY) process.stdin.setRawMode(true);
     process.stdin.resume();
-    process.stdin.on('keypress', async (_, key) => {
+    process.stdin.on('keypress', async (_, key: Key) => {
       if (key && key.ctrl && key.name === 'c') {
         console.clear();
+        console.log(chalk.yellow.dim.bold('Thanks for using this program!'));
         return process.exit();
       }
 
-      switch (key.name) {
-        case 'up':
-          return this.update(this.index - 1);
-
-        case 'down':
-          return this.update(this.index + 1);
-
-        case 'tab': {
-          try {
-            const invite = await this.getInvite();
-            return console.log(`Invite ${this.colorizeInfo(invite.url)}`);
-          } catch {
-            return console.error(
-              this.colorizeError('Failed to fetch an invite')
-            );
-          }
-        }
-
-        case 'l': {
-          if (!key.ctrl) return;
-
-          const left = await this.leaveGuild();
-          if (left === null || left === undefined)
-            return console.log(
-              `Are you sure? Press ${this.colorizeInfo(
-                'CTRL + L'
-              )} again to continue`
-            );
-
-          if (!left)
-            return console.log(this.colorizeError('Failed to leave the guild'));
-          return this.update(this.index);
-        }
-      }
+      const pressed = this.keybinds[key.name];
+      if (this.showingHelp && pressed?.name !== 'escape') return;
+      if (pressed && pressed.validator.call(this, key))
+        await pressed.execute.call(this);
     });
   }
 
@@ -98,6 +84,7 @@ export default class List extends EventEmitter {
     const list = columnify(this.buildInfo(guildNames), {
       minWidth: 15,
       columnSplitter: ' | ',
+      headingTransform: (val) => chalk.gray.dim.bold(val.toUpperCase()),
     });
 
     console.log(list);
