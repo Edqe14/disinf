@@ -2,13 +2,15 @@
   "name": "disinf",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/index.ts",
+  "bin": "dist/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev_nodemon": "NODE_ENV=development nodemon -L -r dotenv/config -r tsconfig-paths/register src/index.ts",
     "dev": "NODE_ENV=development ts-node -r dotenv/config -r tsconfig-paths/register src",
     "start": "NODE_ENV=production node dist",
-    "build": "tsc && tscpaths -p tsconfig.json -s src -o dist"
+    "build": "NODE_ENV=production tsc && tscpaths -p tsconfig.json -s src -o dist",
+    "pkg": "NODE_ENV=production pkg ./package.json"
   },
   "repository": {
     "type": "git",
@@ -26,6 +28,7 @@
     "@types/node": "^15.12.2",
     "@types/prompt": "^1.1.0",
     "@types/terminal-kit": "^1.28.2",
+    "@types/ws": "^7.4.4",
     "@typescript-eslint/eslint-plugin": "^4.26.1",
     "@typescript-eslint/parser": "^4.26.1",
     "dotenv": "^10.0.0",
@@ -34,6 +37,7 @@
     "eslint-plugin-eslint-plugin": "^3.0.3",
     "eslint-plugin-import": "^2.23.4",
     "eslint-plugin-prettier": "^3.4.0",
+    "pkg": "^5.2.1",
     "prettier": "^2.3.1",
     "tsconfig-paths": "^3.9.0",
     "tscpaths": "0.0.9",
@@ -44,5 +48,9 @@
     "columnify": "^1.5.4",
     "discord.js": "^12.5.3",
     "ora": "^5.4.1"
+  },
+  "pkg": {
+    "scripts": "dist/**/*.js",
+    "outputPath": "dist/pkg"
   }
 }
