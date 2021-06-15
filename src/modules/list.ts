@@ -104,11 +104,9 @@ export default class List extends EventEmitter {
       `Owner ${this.colorizeInfo(
         `${guild?.owner?.user?.tag} (${guild?.ownerID})`
       )}`,
-      `Total Member ${this.colorizeInfo(guild?.memberCount?.toString())}`,
-      `Humans ${this.colorizeInfo(
-        guild?.members?.cache?.filter((m) => !m.user.bot)?.size?.toString()
-      )}\tBots ${this.colorizeInfo(
-        guild?.members?.cache?.filter((m) => m.user.bot)?.size?.toString()
+      `Total Members ${this.colorizeInfo(guild?.memberCount?.toString())}`,
+      `Total Channels ${this.colorizeInfo(
+        guild?.channels.cache.size.toString()
       )}`,
       `Total Roles ${this.colorizeInfo(guild?.roles?.cache?.size?.toString())}`,
     ];
